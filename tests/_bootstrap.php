@@ -6,6 +6,7 @@
  */
 
 use craft\test\TestSetup;
+use Symfony\Component\Dotenv\Dotenv;
 
 ini_set('date.timezone', 'UTC');
 date_default_timezone_set('UTC');
@@ -18,6 +19,12 @@ define('CRAFT_CONFIG_PATH', __DIR__ . '/_craft/config');
 define('CRAFT_MIGRATIONS_PATH', __DIR__ . '/_craft/migrations');
 define('CRAFT_TRANSLATIONS_PATH', __DIR__ . '/_craft/translations');
 define('CRAFT_VENDOR_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor');
+
+$dotenvPath = CRAFT_TESTS_PATH . '/_craft/.env';
+
+if (is_file($dotenvPath)) {
+    (new Dotenv())->usePutenv()->overload($dotenvPath);
+}
 
 foreach ([CRAFT_STORAGE_PATH, CRAFT_MIGRATIONS_PATH, CRAFT_TRANSLATIONS_PATH, __DIR__ . '/_craft/web'] as $path) {
     if (!is_dir($path)) {

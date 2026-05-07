@@ -27,5 +27,5 @@ modules:
           handle: feed-me
       cleanup: true
       transaction: true
-      dbSetup: {clean: false, setupCraft: false}
+      dbSetup: {clean: true, setupCraft: true}
       fullMock: false
