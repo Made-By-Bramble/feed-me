@@ -14,6 +14,10 @@ class m260507_000000_create_exports_table extends Migration
      */
     public function safeUp(): bool
     {
+        if ($this->db->tableExists('{{%feedme_exports}}')) {
+            return true;
+        }
+
         $this->createTable('{{%feedme_exports}}', [
             'id' => $this->primaryKey(),
             'feedId' => $this->integer()->notNull(),
