@@ -127,6 +127,11 @@ class FeedMeVariable extends ServiceLocator
         return Plugin::$plugin->data->getFeedForTemplate($options);
     }
 
+    public function isFeedExportable(?FeedModel $feed): bool
+    {
+        return Plugin::$plugin->exports->isFeedExportable($feed);
+    }
+
 
     //
     // Fields + Field Mapping
