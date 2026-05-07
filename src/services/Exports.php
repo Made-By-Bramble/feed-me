@@ -11,12 +11,15 @@ use craft\elements\User;
 use craft\feedme\models\ExportModel;
 use craft\feedme\models\FeedModel;
 use craft\feedme\Plugin;
+use craft\feedme\queue\jobs\FeedExport;
 use craft\feedme\records\ExportRecord;
 use craft\helpers\ArrayHelper;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\Db;
 use craft\helpers\FileHelper;
+use craft\helpers\Queue;
 use craft\helpers\StringHelper;
+use craft\helpers\UrlHelper;
 use DateTime;
 use DateTimeInterface;
 use DOMDocument;
@@ -99,7 +102,23 @@ class Exports extends Component
             'dateExpires' => $this->createExpiryDate($feed),
         ]);
 
-        $this->saveExport($export);
+        if (!$this->saveExport($export)) {
+            throw new Exception(Craft::t('feed-me', 'Unable to save export.'));
+        }
+
+        return $export;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function queueExport(FeedModel $feed, User $user, ?string $format = null): ExportModel
+    {
+        $export = $this->createExport($feed, $user, $format);
+
+        Queue::push(new FeedExport([
+            'exportId' => (int)$export->id,
+        ]));
 
         return $export;
     }
@@ -118,7 +137,7 @@ class Exports extends Component
             $record = ExportRecord::findOne($model->id);
 
             if (!$record) {
-                throw new Exception(Craft::t('feed-me', 'No export exists with the ID “{id}”.', ['id' => $model->id]));
+                throw new Exception(Craft::t('feed-me', 'No export exists with the ID "{id}".', ['id' => $model->id]));
             }
         } else {
             $record = new ExportRecord();
@@ -225,6 +244,54 @@ class Exports extends Component
         return sprintf('%s-%s.%s', $name, $date, $format);
     }
 
+    public function getDownloadUrl(ExportModel $export): string
+    {
+        return UrlHelper::cpUrl('feed-me/exports/download/' . $export->token);
+    }
+
+    public function canDownloadExport(ExportModel $export, ?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($export->userId && (int)$export->userId === (int)$user->id) {
+            return true;
+        }
+
+        return (bool)$user->admin || Craft::$app->getUser()->checkPermission('accessPlugin-feed-me');
+    }
+
+    public function sendExportEmail(ExportModel $export): bool
+    {
+        if (!$export->userId) {
+            return false;
+        }
+
+        $user = Craft::$app->getUsers()->getUserById($export->userId);
+
+        if (!$user instanceof User || !$user->email) {
+            return false;
+        }
+
+        $downloadUrl = $this->getDownloadUrl($export);
+        $expires = $export->dateExpires ? Craft::$app->getFormatter()->asDatetime($export->dateExpires) : Craft::t('feed-me', 'never');
+
+        return Craft::$app->getMailer()
+            ->compose()
+            ->setTo($user)
+            ->setSubject(Craft::t('feed-me', 'Your Feed Me export is ready'))
+            ->setTextBody(Craft::t('feed-me',
+                "Your export \"{filename}\" is ready.\n\nDownload: {url}\n\nYou must be logged in to Craft to access this private file. This link expires {expires}.",
+                [
+                    'filename' => $export->filename,
+                    'url' => $downloadUrl,
+                    'expires' => $expires,
+                ]
+            ))
+            ->send();
+    }
+
     /**
      * @throws Exception
      * @throws Throwable
@@ -245,7 +312,7 @@ class Exports extends Component
             'csv' => $this->writeCsv($path, $rows, $feed),
             'json' => $this->writeJson($path, $rows, $feed),
             'xml' => $this->writeXml($path, $rows, $feed),
-            default => throw new Exception(Craft::t('feed-me', 'Unsupported export format “{format}”.', ['format' => $export->format])),
+            default => throw new Exception(Craft::t('feed-me', 'Unsupported export format "{format}".', ['format' => $export->format])),
         };
 
         return count($rows);
