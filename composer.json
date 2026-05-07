@@ -40,7 +40,9 @@
     "craftcms/ecs": "dev-main",
     "craftcms/phpstan": "dev-main",
     "codeception/codeception": "^4.0.0",
-    "codeception/module-asserts": "^1.3"
+    "codeception/module-asserts": "^1.3",
+    "codeception/module-yii2": "^1.0",
+    "symfony/dotenv": "^5.4"
   },
   "autoload": {
     "psr-4": {

@@ -8,6 +8,7 @@ use craft\feedme\base\PluginTrait;
 use craft\feedme\models\Settings;
 use craft\feedme\services\DataTypes;
 use craft\feedme\services\Elements;
+use craft\feedme\services\Exports;
 use craft\feedme\services\Feeds;
 use craft\feedme\services\Fields;
 use craft\feedme\services\Logs;
@@ -27,6 +28,7 @@ use yii\queue\Queue;
  *
  * @property-read DataTypes $data
  * @property-read Elements $elements
+ * @property-read Exports $exports
  * @property-read Feeds $feeds
  * @property-read Fields $fields
  * @property-read Logs $logs
@@ -43,7 +45,7 @@ class Plugin extends \craft\base\Plugin
     // Public Properties
     // =========================================================================
 
-    public $schemaVersion = '4.4.1';
+    public $schemaVersion = '4.9.0';
     public $hasCpSettings = true;
     public $hasCpSection = true;
 
@@ -154,6 +156,7 @@ class Plugin extends \craft\base\Plugin
                 'feed-me/feeds/map/<feedId:\d+>' => 'feed-me/feeds/map-feed',
                 'feed-me/feeds/run/<feedId:\d+>' => 'feed-me/feeds/run-feed',
                 'feed-me/feeds/status/<feedId:\d+>' => 'feed-me/feeds/status-feed',
+                'feed-me/exports/download/<token:[A-Za-z0-9]+>' => 'feed-me/exports/download',
                 'feed-me/logs' => 'feed-me/logs/logs',
                 'feed-me/settings/general' => 'feed-me/base/settings',
             ]);

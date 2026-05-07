@@ -2,12 +2,13 @@ actor: Tester
 bootstrap: _bootstrap.php
 paths:
   tests: tests
-  log: tests/_output
+  output: tests/_output
   data: tests/_data
   support: tests/_support
   envs: tests/_envs
 settings:
   colors: true
+  error_level: "E_ALL & ~E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED"
   memory_limit: 1024M
 extensions:
   enabled:
@@ -23,9 +24,9 @@ modules:
       migrations: []
       plugins:
         feedme:
-          class: '\craftcms\feedme\Plugin'
+          class: '\craft\feedme\Plugin'
           handle: feed-me
       cleanup: true
       transaction: true
-      dbSetup: {clean: false, setupCraft: false}
+      dbSetup: {clean: true, setupCraft: true}
       fullMock: false

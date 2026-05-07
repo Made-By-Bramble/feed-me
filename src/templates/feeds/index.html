@@ -101,6 +101,20 @@
                                         <i class="fa fa-clone"></i>
                                         <span class="btn-text">{{ 'Duplicate Feed'|t('feed-me') }}</span>
                                     </a>
+
+                                    {% if craft.feedme.isFeedExportable(feed) %}
+                                        <form method="post" accept-charset="UTF-8" class="inline">
+                                            {{ csrfInput() }}
+                                            <input type="hidden" name="action" value="feed-me/exports/run-export">
+                                            <input type="hidden" name="feedId" value="{{ feed.id }}">
+                                            <input type="hidden" name="format" value="{{ feed.feedType }}">
+
+                                            <button type="submit" class="btn">
+                                                <i class="fa fa-download"></i>
+                                                <span class="btn-text">{{ 'Export Feed'|t('feed-me') }}</span>
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                 </div>
 
                                 {% set cpTrigger = craft.app.config.general.cpTrigger ~ '/' %}
@@ -135,4 +149,3 @@
         confirmDeleteMessage: '{{ "Are you sure you want to delete “{name}”?"|t('feed-me') }}'
     });
 {% endjs %}
-

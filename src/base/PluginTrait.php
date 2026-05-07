@@ -6,6 +6,7 @@ use Craft;
 use craft\feedme\Plugin;
 use craft\feedme\services\DataTypes;
 use craft\feedme\services\Elements;
+use craft\feedme\services\Exports;
 use craft\feedme\services\Feeds;
 use craft\feedme\services\Fields;
 use craft\feedme\services\Logs;
@@ -101,6 +102,14 @@ trait PluginTrait
     }
 
     /**
+     * @return Exports
+     */
+    public function getExports()
+    {
+        return $this->get('exports');
+    }
+
+    /**
      * @return Fields
      */
     public function getFields()
@@ -144,6 +153,7 @@ trait PluginTrait
         $this->setComponents([
             'data' => DataTypes::class,
             'elements' => Elements::class,
+            'exports' => Exports::class,
             'feeds' => Feeds::class,
             'fields' => Fields::class,
             'logs' => Logs::class,

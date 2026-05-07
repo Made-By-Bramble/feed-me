@@ -64,6 +64,13 @@ class Settings extends Model
     public $csvColumnDelimiter = ',';
 
     /**
+     * Number of seconds export download links remain valid.
+     *
+     * @var int
+     */
+    public $exportExpirySeconds = 604800;
+
+    /**
      * @var array
      */
     public $parseTwig = [];

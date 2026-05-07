@@ -4,6 +4,7 @@ namespace craft\feedme\web\twig\variables;
 
 use Craft;
 use craft\elements\User;
+use craft\feedme\models\FeedModel;
 use craft\feedme\Plugin;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\Html;
@@ -102,6 +103,11 @@ class FeedMeVariable extends ServiceLocator
         $options['headers'] = true;
 
         return Plugin::$plugin->data->getFeedForTemplate($options);
+    }
+
+    public function isFeedExportable(FeedModel $feed = null)
+    {
+        return Plugin::$plugin->exports->isFeedExportable($feed);
     }
 
 
