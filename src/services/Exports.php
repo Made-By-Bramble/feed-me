@@ -802,14 +802,22 @@ class Exports extends Component
         $document = new DOMDocument('1.0', 'UTF-8');
         $document->formatOutput = true;
 
-        $root = $document->createElement('feed');
+        [$rootName, $containerSegments, $itemName] = $this->getXmlDocumentShape($feed);
+
+        $root = $document->createElement($rootName);
         $document->appendChild($root);
 
-        $itemName = $this->getItemName($feed);
+        $container = $root;
+
+        foreach ($containerSegments as $segment) {
+            $child = $document->createElement($segment);
+            $container->appendChild($child);
+            $container = $child;
+        }
 
         foreach ($rows as $row) {
             $item = $document->createElement($itemName);
-            $root->appendChild($item);
+            $container->appendChild($item);
 
             foreach ($row as $key => $value) {
                 $this->appendXmlValue($document, $item, (string)$key, $value);
@@ -849,13 +857,23 @@ class Exports extends Component
 
     private function createDocumentPayload(array $rows, FeedModel $feed): array
     {
-        if (!$feed->primaryElement) {
+        $segments = $this->getPrimaryElementSegments($feed);
+
+        if (!$segments) {
             return array_values($rows);
         }
 
-        return [
-            $this->getItemName($feed) => array_values($rows),
+        $payload = [
+            array_pop($segments) => array_values($rows),
         ];
+
+        while ($segments) {
+            $payload = [
+                array_pop($segments) => $payload,
+            ];
+        }
+
+        return $payload;
     }
 
     private function getMappedNodes(array $mapping): array
@@ -897,18 +915,48 @@ class Exports extends Component
 
     private function getItemName(FeedModel $feed): string
     {
-        $primaryElement = $feed->primaryElement;
+        $segments = $this->getPrimaryElementSegments($feed, true);
+        $name = end($segments);
 
-        if ($primaryElement) {
-            $segments = array_values(array_filter(explode('/', $primaryElement)));
-            $name = end($segments);
-
-            if ($name) {
-                return $this->sanitizeXmlName($name);
-            }
+        if ($name) {
+            return $name;
         }
 
         return 'item';
+    }
+
+    private function getXmlDocumentShape(FeedModel $feed): array
+    {
+        $segments = $this->getPrimaryElementSegments($feed, true);
+
+        if (count($segments) < 2) {
+            return ['feed', [], $this->getItemName($feed)];
+        }
+
+        $itemName = array_pop($segments);
+        $rootName = array_shift($segments);
+
+        return [$rootName, $segments, $itemName];
+    }
+
+    private function getPrimaryElementSegments(FeedModel $feed, bool $forXml = false): array
+    {
+        $primaryElement = $feed->primaryElement;
+
+        if (!$primaryElement) {
+            return [];
+        }
+
+        $segments = array_values(array_filter(
+            explode('/', $primaryElement),
+            fn(string $segment): bool => $segment !== '',
+        ));
+
+        if ($forXml) {
+            return array_map(fn(string $segment): string => $this->sanitizeXmlName($segment), $segments);
+        }
+
+        return $segments;
     }
 
     private function getBlockTypeHandle(CraftElementInterface $element): ?string

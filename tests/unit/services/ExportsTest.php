@@ -119,8 +119,8 @@ class ExportsTest extends \Codeception\Test\Unit
 
         $json = json_decode(file_get_contents($jsonPath), true);
 
-        $this->assertSame('Entry One', $json['item'][0]['title']);
-        $this->assertSame('entry-one', $json['item'][0]['meta']['slug']);
+        $this->assertSame('Entry One', $json['items']['item'][0]['title']);
+        $this->assertSame('entry-one', $json['items']['item'][0]['meta']['slug']);
 
         $this->invokePrivate('writeXml', [$xmlPath, [
             [
@@ -133,6 +133,7 @@ class ExportsTest extends \Codeception\Test\Unit
 
         $xml = simplexml_load_file($xmlPath);
 
+        $this->assertSame('items', $xml->getName());
         $this->assertSame('Entry One', (string)$xml->item[0]->title);
         $this->assertSame('entry-one', (string)$xml->item[0]->meta->slug);
     }
