@@ -28,7 +28,7 @@ For shared environments, use the public GitHub fork as a Composer VCS repository
     }
   ],
   "require": {
-    "craftcms/feed-me": "dev-feat/exportable-imports"
+    "craftcms/feed-me": "dev-bramble/6.x-exportable-imports"
   }
 }
 ```
@@ -39,6 +39,8 @@ Then run:
 composer update craftcms/feed-me -W
 ./craft migrate/up --plugin=feed-me
 ```
+
+Use `dev-bramble/6.x-exportable-imports` for Craft 5 projects. Once a Bramble release tag exists, prefer the matching numeric patch tag, for example `6.11.0.1`, so production installs are pinned to an immutable release.
 
 To override a pre-existing Pixel & Tonic install, make the same `composer.json` change and run the same update command. Do not uninstall Feed Me from Craft. Composer will replace the package code in place, Craft will continue to see the same `feed-me` plugin, and the fork migration will add the export table.
 
@@ -56,7 +58,7 @@ For active local development only, a path repository can symlink a local clone:
     }
   ],
   "require": {
-    "craftcms/feed-me": "dev-feat/exportable-imports"
+    "craftcms/feed-me": "dev-bramble/6.x-exportable-imports"
   }
 }
 ```
