@@ -99,6 +99,11 @@ class Settings extends Model
     public ?int $queueMaxRetry = null;
 
     /**
+     * @var int
+     */
+    public int $exportExpirySeconds = 604800;
+
+    /**
      * @var bool
      */
     public bool $assetDownloadCurl = false;
