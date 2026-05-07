@@ -559,17 +559,25 @@ class Exports extends Component
 
     private function readAttributeValue(CraftElementInterface $element, string $fieldHandle): mixed
     {
-        try {
-            if (method_exists($element, 'canGetProperty') && $element->canGetProperty($fieldHandle)) {
-                return $element->{$fieldHandle};
-            }
-        } catch (Throwable) {
-            // Fall through to generic accessors.
+        if (property_exists($element, $fieldHandle)) {
+            return $element->{$fieldHandle};
         }
 
         try {
             if (method_exists($element, 'getAttribute')) {
-                return $element->getAttribute($fieldHandle);
+                $value = $element->getAttribute($fieldHandle);
+
+                if ($value !== null) {
+                    return $value;
+                }
+            }
+        } catch (Throwable) {
+            // Fall through to property access.
+        }
+
+        try {
+            if (method_exists($element, 'canGetProperty') && $element->canGetProperty($fieldHandle)) {
+                return $element->{$fieldHandle};
             }
         } catch (Throwable) {
             // Fall through to ArrayHelper.
@@ -841,6 +849,10 @@ class Exports extends Component
 
     private function createDocumentPayload(array $rows, FeedModel $feed): array
     {
+        if (!$feed->primaryElement) {
+            return array_values($rows);
+        }
+
         return [
             $this->getItemName($feed) => array_values($rows),
         ];
