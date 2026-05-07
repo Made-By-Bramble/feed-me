@@ -4,6 +4,7 @@ namespace craft\feedme\models;
 
 use Craft;
 use craft\base\Model;
+use craft\validators\DateTimeValidator;
 use DateTime;
 
 /**
@@ -61,7 +62,7 @@ class ExportModel extends Model
             [['feedId', 'format', 'status', 'filename', 'path', 'token'], 'required'],
             [['feedId', 'userId', 'rowCount', 'fileSize'], 'integer'],
             [['format', 'status', 'filename', 'path', 'token', 'error'], 'string'],
-            [['dateExpires'], 'date'],
+            [['dateExpires'], DateTimeValidator::class],
             [['format'], 'in', 'range' => ['csv', 'json', 'xml']],
             [['status'], 'in', 'range' => [
                 self::STATUS_PENDING,

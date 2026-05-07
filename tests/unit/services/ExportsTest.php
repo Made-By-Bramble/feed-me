@@ -1,5 +1,6 @@
 <?php
 
+use craft\feedme\models\ExportModel;
 use craft\feedme\models\FeedModel;
 use craft\feedme\services\Exports;
 use craft\helpers\FileHelper;
@@ -159,6 +160,21 @@ class ExportsTest extends \Codeception\Test\Unit
         $json = json_decode(file_get_contents($jsonPath), true);
 
         $this->assertSame('Root Entry', $json[0]['title']);
+    }
+
+    public function testExportModelAcceptsDateTimeExpiry()
+    {
+        $model = new ExportModel([
+            'feedId' => 1,
+            'format' => 'csv',
+            'status' => ExportModel::STATUS_PENDING,
+            'filename' => 'export.csv',
+            'path' => 'token/export.csv',
+            'token' => 'token',
+            'dateExpires' => new DateTime('+1 day'),
+        ]);
+
+        $this->assertTrue($model->validate(), json_encode($model->getErrors(), JSON_UNESCAPED_SLASHES));
     }
 
     private function createFeed(array $fieldMapping): FeedModel
