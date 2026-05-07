@@ -112,5 +112,6 @@ class Install extends Migration
         $this->dropTableIfExists('{{%feedme_feeds}}');
         $this->dropTableIfExists('{{%feedme_logs}}');
         $this->dropTableIfExists('{{%feedme_exports}}');
+        $this->dropTableIfExists('{{%feedme_sequences}}');
     }
 }
