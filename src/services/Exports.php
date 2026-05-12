@@ -348,13 +348,17 @@ class Exports extends Component
         if (method_exists($query, 'each')) {
             foreach ($query->each() as $element) {
                 if ($element instanceof CraftElementInterface) {
-                    $rows[] = $this->mapElement($feed, $element, $format);
+                    foreach ($this->mapElementRows($feed, $element, $format) as $row) {
+                        $rows[] = $row;
+                    }
                 }
             }
         } else {
             foreach ($query->all() as $element) {
                 if ($element instanceof CraftElementInterface) {
-                    $rows[] = $this->mapElement($feed, $element, $format);
+                    foreach ($this->mapElementRows($feed, $element, $format) as $row) {
+                        $rows[] = $row;
+                    }
                 }
             }
         }
@@ -367,8 +371,28 @@ class Exports extends Component
      */
     public function mapElement(FeedModel $feed, CraftElementInterface $element, string $format): array
     {
+        $rows = $this->mapElementRows($feed, $element, $format);
+
+        return reset($rows) ?: [];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function mapElementRows(FeedModel $feed, CraftElementInterface $element, string $format): array
+    {
         $row = [];
         $mapping = $this->getFilteredFieldMapping($feed->fieldMapping);
+
+        if ($format === 'csv') {
+            $rows = [[]];
+
+            foreach ($mapping as $fieldHandle => $fieldInfo) {
+                $this->mapFieldRows($feed, $element, $rows, $fieldHandle, $fieldInfo);
+            }
+
+            return $rows;
+        }
 
         foreach ($mapping as $fieldHandle => $fieldInfo) {
             $this->mapField($feed, $element, $row, $fieldHandle, $fieldInfo, $format);
@@ -440,6 +464,56 @@ class Exports extends Component
         }
 
         $this->mapBlocks($feed, $rawValue, $row, Hash::get($fieldInfo, 'blocks', []), $format);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function mapFieldRows(FeedModel $feed, $source, array &$rows, string $fieldHandle, array $fieldInfo): void
+    {
+        $rawValue = $this->readMappedValue($source, $fieldHandle, $fieldInfo);
+        $items = $this->valueToArray($rawValue);
+
+        if ($this->shouldExpandRows($fieldInfo, $items)) {
+            $expandedRows = [];
+
+            foreach ($rows as $row) {
+                foreach ($items as $item) {
+                    $itemRow = $row;
+
+                    $this->mapExpandedField($feed, $item, $itemRow, $fieldInfo);
+
+                    $expandedRows[] = $itemRow;
+                }
+            }
+
+            $rows = $expandedRows;
+            return;
+        }
+
+        foreach ($rows as &$row) {
+            $this->mapField($feed, $source, $row, $fieldHandle, $fieldInfo, 'csv');
+        }
+        unset($row);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function mapExpandedField(FeedModel $feed, $item, array &$row, array $fieldInfo): void
+    {
+        $node = Hash::get($fieldInfo, 'node');
+
+        if ($this->isMappableNode($node)) {
+            $value = $this->normalizeMappedValue($item, $fieldInfo, $feed, 'csv');
+            $this->setMappedValue($row, $node, $value, 'csv');
+        }
+
+        foreach (['attributes', 'nativeFields', 'fields'] as $group) {
+            $this->mapNestedFields($feed, $item, $row, Hash::get($fieldInfo, $group, []), 'csv');
+        }
+
+        $this->mapBlocks($feed, $item, $row, Hash::get($fieldInfo, 'blocks', []), 'csv');
     }
 
     /**
@@ -719,6 +793,10 @@ class Exports extends Component
 
     private function valueToArray($value): array
     {
+        if ($value instanceof CraftElementInterface) {
+            return [$value];
+        }
+
         if ($value instanceof ElementQueryInterface) {
             return $value->all();
         }
@@ -981,6 +1059,22 @@ class Exports extends Component
     private function isMappableNode($node): bool
     {
         return is_string($node) && $node !== '' && !in_array($node, ['noimport', 'usedefault'], true);
+    }
+
+    private function shouldExpandRows(array $fieldInfo, array $items): bool
+    {
+        return count($items) > 1 && $this->hasNestedMappings($fieldInfo);
+    }
+
+    private function hasNestedMappings(array $fieldInfo): bool
+    {
+        foreach (['attributes', 'nativeFields', 'fields'] as $group) {
+            if (!empty(Hash::get($fieldInfo, $group, []))) {
+                return true;
+            }
+        }
+
+        return !empty(Hash::get($fieldInfo, 'blocks', []));
     }
 
     private function isReadableMapping($source, array $fieldInfo): bool
