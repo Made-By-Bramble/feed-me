@@ -472,6 +472,7 @@ class Exports extends Component
 
             if (!empty($values)) {
                 $value = count($values) === 1 ? reset($values) : $values;
+                $value = $this->normalizeValue($value, $feed, $format === 'csv');
                 $this->setMappedValue($row, Hash::get($fieldInfo, 'node'), $value, $format);
             }
 
