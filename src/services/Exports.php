@@ -865,7 +865,7 @@ class Exports extends Component
 
         foreach ($rows as $row) {
             $writer->insertOne(array_map(function(string $header) use ($row) {
-                return $row[$header] ?? null;
+                return $this->normalizeCsvCell($row[$header] ?? null);
             }, $headers));
         }
     }
@@ -1118,6 +1118,17 @@ class Exports extends Component
         }
 
         return (string)$value;
+    }
+
+    private function normalizeCsvCell($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = $this->stringifyScalar($value);
+
+        return str_replace(["\r\n", "\r", "\n"], ' ', $value);
     }
 
     private function sanitizeXmlName(string $name): string
